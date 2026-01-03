@@ -1,25 +1,25 @@
 import { connect } from 'cloudflare:sockets';
 
 // =============================================================================
-// 🟣 1. 用户配置区域 (默认值/硬编码)
-//    优先级说明: 环境变量 > D1数据库 > KV > 下面的硬编码常量
+// 🟣 1. 用户配置区域 (优先级: 环境变量 > D1 > KV > 硬编码)
 // =============================================================================
-const UUID = "06b65903-406d-4a41-8463-6fd5c0ee7798"; // 修改可用的uuid
-const WEB_PASSWORD = "你的登录密码";  //自己要修改自定义的登录密码
-const SUB_PASSWORD = "你的订阅密码";  // 自己要修改自定义的订阅密码
-const DEFAULT_PROXY_IP = "ProxyIP.US.CMLiussss.net";  //可修改自定义的proxyip
-//⚠️ 注意：下方DEFAULT_SUB_DOMAIN如果有值，只执行这个上游订阅。如果要用下方的ADD本地节点，请务必把这里留空！ 
-const DEFAULT_SUB_DOMAIN = "sub.cmliussss.net";  //可修改自定义的sub订阅器 为空则直接使用远程ADD
-const TG_GROUP_URL = "https://t.me/zyssadmin";   //可修改自定义内容
-const TG_CHANNEL_URL = "https://t.me/cloudflareorg";  //可此修改自定义内容
-const PROXY_CHECK_URL = "https://kaic.hidns.co/";  //可修改自定义的proxyip检测站
-const DEFAULT_CONVERTER = "https://subapi.cmliussss.net";  //可修改自定义后端api
-const CLASH_CONFIG = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online_Full_MultiMode.ini"; //可修改自定义订阅配置转换ini
-const SINGBOX_CONFIG_V12 = "https://raw.githubusercontent.com/sinspired/sub-store-template/main/1.12.x/sing-box.json"; //禁止修改 优先使用1.12 后用1.11
-const SINGBOX_CONFIG_V11 = "https://raw.githubusercontent.com/sinspired/sub-store-template/main/1.11.x/sing-box.json"; //禁止修改
-const TG_BOT_TOKEN = ""; //你的机器人token
-const TG_CHAT_ID = "";  //你的TG ID
-const ADMIN_IP   = "";  //你的白名单IP 保护你不会被自己域名拉黑 (支持多IP，IPV4跟IPV6 使用英文逗号分隔)
+let UUID = "06b65903-406d-4a41-8463-6fd5c0ee7798"; 
+const WEB_PASSWORD = "你的登录密码"; 
+const SUB_PASSWORD = "你的订阅密码"; 
+const DEFAULT_PROXY_IP = "ProxyIP.US.CMLiussss.net"; 
+const DEFAULT_SUB_DOMAIN = "sub.cmliussss.net"; 
+const TG_GROUP_URL = "https://t.me/zyssadmin";
+const TG_CHANNEL_URL = "https://t.me/cloudflareorg";
+const PROXY_CHECK_URL = "https://kaic.hidns.co/";
+const DEFAULT_CONVERTER = "https://subapi.cmliussss.net";
+const CLASH_CONFIG = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online_Full_MultiMode.ini";
+const SINGBOX_CONFIG_V12 = "https://raw.githubusercontent.com/sinspired/sub-store-template/main/1.12.x/sing-box.json";
+const SINGBOX_CONFIG_V11 = "https://raw.githubusercontent.com/sinspired/sub-store-template/main/1.11.x/sing-box.json";
+const TG_BOT_TOKEN = "";
+const TG_CHAT_ID = "";
+const ADMIN_IP = "";
+const LOGIN_PAGE_TITLE = "Worker Login";
+const DASHBOARD_TITLE = "烈火控制台 · Glass LH"; 
 
 // =============================================================================
 // 🟢 特征码深度混淆 (全文无敏感词)
@@ -395,7 +395,9 @@ export default {
       const _WEB_PW = await getSafeEnv(env, 'WEB_PASSWORD', WEB_PASSWORD);
       const _SUB_PW = await getSafeEnv(env, 'SUB_PASSWORD', SUB_PASSWORD);
       const _PROXY_IP = await getSafeEnv(env, 'PROXYIP', DEFAULT_PROXY_IP);
-      const _PS = await getSafeEnv(env, 'PS', ""); 
+      const _PS = await getSafeEnv(env, 'PS', "");
+      const _LOGIN_TITLE = await getSafeEnv(env, 'LOGIN_PAGE_TITLE', LOGIN_PAGE_TITLE);
+      const _DASH_TITLE = await getSafeEnv(env, 'DASHBOARD_TITLE', DASHBOARD_TITLE); 
       
       let _SUB_DOMAIN = await getSafeEnv(env, 'SUB_DOMAIN', DEFAULT_SUB_DOMAIN);
       let _CONVERTER = await getSafeEnv(env, 'SUBAPI', DEFAULT_CONVERTER);
@@ -503,10 +505,10 @@ export default {
 
       if (r.headers.get('Upgrade') !== 'websocket') {
         const noCacheHeaders = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' };
-        if (!hasAuthCookie) return new Response(loginPage(TG_GROUP_URL, TG_CHANNEL_URL), { status: 200, headers: noCacheHeaders });
-        await sendTgMsg(ctx, env, "✅ 后台登录成功", r, "进入管理面板", true); 
+        if (!hasAuthCookie) return new Response(loginPage(TG_GROUP_URL, TG_CHANNEL_URL, _LOGIN_TITLE), { status: 200, headers: noCacheHeaders });
+        await sendTgMsg(ctx, env, "✅ 后台登录成功", r, "进入管理面板", true);
         ctx.waitUntil(logAccess(env, clientIP, `${city},${country}`, "登录后台"));
-        
+
         const sysParams = { tgToken: env.TG_BOT_TOKEN || TG_BOT_TOKEN, tgId: env.TG_CHAT_ID || TG_CHAT_ID, cfId: env.CF_ID || "", cfToken: env.CF_TOKEN || "", cfMail: env.CF_EMAIL || "", cfKey: env.CF_KEY || "" };
         const tgToken = await getSafeEnv(env, 'TG_BOT_TOKEN', TG_BOT_TOKEN);
         const tgId = await getSafeEnv(env, 'TG_CHAT_ID', TG_CHAT_ID);
@@ -515,7 +517,7 @@ export default {
         const tgState = !!(tgToken && tgId); const cfState = (!!(cfId && cfToken)) || (!!(cfMail && cfKey));
         const _ADD = await getSafeEnv(env, 'ADD', ""); const _ADDAPI = await getSafeEnv(env, 'ADDAPI', ""); const _ADDCSV = await getSafeEnv(env, 'ADDCSV', "");
 
-        return new Response(dashPage(url.hostname, _UUID, _PROXY_IP, _SUB_PW, _SUB_DOMAIN, _CONVERTER, env, clientIP, hasAuthCookie, tgState, cfState, _ADD, _ADDAPI, _ADDCSV, tgToken, tgId, cfId, cfToken, cfMail, cfKey, sysParams), { status: 200, headers: noCacheHeaders });
+        return new Response(dashPage(url.hostname, _UUID, _PROXY_IP, _SUB_PW, _SUB_DOMAIN, _CONVERTER, env, clientIP, hasAuthCookie, tgState, cfState, _ADD, _ADDAPI, _ADDCSV, tgToken, tgId, cfId, cfToken, cfMail, cfKey, sysParams, _DASH_TITLE), { status: 200, headers: noCacheHeaders });
       }
       
       // 🟢 代理入口 - 混淆版
@@ -536,7 +538,7 @@ export default {
 // =============================================================================
 
 function genNodes(host, uuid, proxyIP, customIPs, psName) {
-  const commonUrlPart = `?encryption=none&security=tls&sni=${host}&fp=random&type=ws&host=${host}&udp=false`;
+  const commonUrlPart = `?encryption=none&security=tls&sni=${host}&fp=random&type=ws&host=${host}`;
   const separator = psName ? ` ${psName}` : '';
   const result = [];
   if (!customIPs || customIPs.length === 0) {
@@ -570,29 +572,132 @@ async function getCustomIPs(env) {
     return allIPs;
 }
 
-function loginPage(tgGroup, tgChannel) {
+function loginPage(tgGroup, tgChannel, pageTitle) {
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worker Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5, user-scalable=yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>${pageTitle}</title>
     <style>
-        body { background: linear-gradient(135deg, #0f4c75 0%, #3282b8 50%, #bbe1fa 100%); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .glass-box { background: rgba(16, 32, 60, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); text-align: center; width: 320px; }
-        h2 { margin-top: 0; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 8px; } h2::before { content: '🔒'; font-size: 1.2rem; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(30, 45, 70, 0.6); color: white; box-sizing: border-box; text-align: center; font-size: 0.95rem; outline: none; transition: 0.3s; }
-        input:focus { border-color: #3282b8; background: rgba(30, 45, 70, 0.9); } input::placeholder { color: #8ba0b3; }
-        .btn-group { display: flex; flex-direction: column; gap: 10px; }
-        button { width: 100%; padding: 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.95rem; transition: 0.2s; font-weight: 600; }
-        .btn-primary { background: linear-gradient(90deg, #3282b8, #0f4c75); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.2); } .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-unlock { background: linear-gradient(90deg, #a29bfe, #6c5ce7); color: white; margin-top: 5px; } .btn-unlock:hover { opacity: 0.9; transform: translateY(-1px); }
-        .social-links { margin-top: 25px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .pill { background: rgba(0, 0, 0, 0.3); padding: 6px 12px; border-radius: 20px; color: #dcdde1; text-decoration: none; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .pill:hover { background: rgba(255, 255, 255, 0.1); border-color: #3282b8; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; position: relative; }
+
+        /* 星空背景 */
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+        .star { position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%; animation: twinkle 3s infinite; box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.5); } }
+
+        /* 流星雨特效 */
+        .meteor { position: absolute; width: 3px; height: 150px; background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.5), transparent); border-radius: 50%; animation: meteor-fall linear infinite; opacity: 0; box-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
+        @keyframes meteor-fall { 0% { opacity: 1; transform: translateX(0) translateY(0) rotate(-45deg); } 70% { opacity: 0.8; } 100% { opacity: 0; transform: translateX(-500px) translateY(500px) rotate(-45deg); } }
+        .meteor:nth-child(1) { top: 5%; left: 10%; animation-duration: 1.8s; animation-delay: 0s; }
+        .meteor:nth-child(2) { top: 15%; left: 30%; animation-duration: 2.2s; animation-delay: 0.8s; }
+        .meteor:nth-child(3) { top: 8%; left: 50%; animation-duration: 2.5s; animation-delay: 1.5s; }
+        .meteor:nth-child(4) { top: 20%; left: 70%; animation-duration: 2s; animation-delay: 2.2s; }
+        .meteor:nth-child(5) { top: 12%; left: 85%; animation-duration: 2.3s; animation-delay: 3s; }
+        .meteor:nth-child(6) { top: 25%; left: 20%; animation-duration: 2.1s; animation-delay: 3.8s; }
+        .meteor:nth-child(7) { top: 18%; left: 45%; animation-duration: 2.4s; animation-delay: 4.5s; }
+        .meteor:nth-child(8) { top: 10%; left: 65%; animation-duration: 1.9s; animation-delay: 5.2s; }
+
+        /* 毛玻璃碎片容器 */
+        .glass-shards { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .shard { position: absolute; background: linear-gradient(135deg, rgba(79, 172, 254, 0.08), rgba(157, 127, 245, 0.05)); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); animation: shardFloat 25s infinite ease-in-out; }
+        .shard:nth-child(1) { width: 180px; height: 180px; top: 5%; left: 10%; clip-path: polygon(30% 0%, 70% 10%, 100% 40%, 90% 80%, 50% 100%, 10% 90%, 0% 50%); animation-delay: 0s; }
+        .shard:nth-child(2) { width: 140px; height: 200px; top: 50%; left: 5%; clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%); animation-delay: -8s; }
+        .shard:nth-child(3) { width: 220px; height: 160px; top: 10%; right: 8%; clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%); animation-delay: -15s; }
+        .shard:nth-child(4) { width: 150px; height: 150px; bottom: 10%; right: 15%; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); animation-delay: -20s; }
+        .shard:nth-child(5) { width: 190px; height: 130px; top: 40%; left: 3%; clip-path: polygon(40% 0%, 100% 20%, 90% 70%, 30% 100%, 0% 60%); animation-delay: -10s; }
+        .shard:nth-child(6) { width: 130px; height: 180px; bottom: 15%; left: 45%; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); animation-delay: -18s; }
+        @keyframes shardFloat { 0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; } 25% { transform: translateY(-25px) rotate(3deg); opacity: 0.6; } 50% { transform: translateY(-40px) rotate(-2deg); opacity: 0.5; } 75% { transform: translateY(-20px) rotate(4deg); opacity: 0.7; } }
+
+        /* 主登录框 - 毛玻璃效果 */
+        .glass-box { position: relative; z-index: 10; background: rgba(15, 25, 50, 0.4); backdrop-filter: blur(20px) saturate(180%); border: 2px solid rgba(255, 255, 255, 0.1); padding: 45px 40px; border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05); text-align: center; width: 380px; animation: boxAppear 0.8s ease-out; }
+        @keyframes boxAppear { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* 发光边框效果 */
+        .glass-box::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, #00f5ff, #0080ff, #00f5ff, #0080ff); border-radius: 20px; z-index: -1; opacity: 0.3; filter: blur(10px); animation: borderGlow 3s linear infinite; }
+        @keyframes borderGlow { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+
+        h2 { margin-bottom: 30px; font-weight: 700; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-shadow: 0 0 20px rgba(0, 245, 255, 0.5); letter-spacing: 2px; }
+        h2::before { content: '🔒'; font-size: 1.4rem; filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.8)); }
+
+        input { width: 100%; padding: 14px 18px; margin-bottom: 20px; border-radius: 12px; border: 1px solid rgba(0, 245, 255, 0.3); background: rgba(10, 20, 40, 0.6); color: white; text-align: center; font-size: 1rem; outline: none; transition: all 0.3s; backdrop-filter: blur(5px); }
+        input:focus { border-color: #00f5ff; background: rgba(10, 20, 40, 0.8); box-shadow: 0 0 20px rgba(0, 245, 255, 0.4), inset 0 0 10px rgba(0, 245, 255, 0.1); }
+        input::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+        button { width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 1rem; transition: all 0.3s; font-weight: 600; position: relative; overflow: hidden; }
+        button::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.3); transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s; }
+        button:hover::before { width: 300px; height: 300px; top: -150px; left: -150px; }
+
+        .btn-primary { background: linear-gradient(135deg, rgba(0, 128, 255, 0.8), rgba(0, 245, 255, 0.6)); color: white; box-shadow: 0 4px 15px rgba(0, 128, 255, 0.4); border: 1px solid rgba(0, 245, 255, 0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 25px rgba(0, 245, 255, 0.6); transform: translateY(-2px); }
+
+        .btn-unlock { background: linear-gradient(135deg, rgba(138, 43, 226, 0.8), rgba(75, 0, 130, 0.8)); color: white; box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4); border: 1px solid rgba(138, 43, 226, 0.5); }
+        .btn-unlock:hover { box-shadow: 0 6px 25px rgba(138, 43, 226, 0.6); transform: translateY(-2px); }
+
+        .social-links { margin-top: 30px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        .pill { background: rgba(0, 245, 255, 0.1); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 25px; color: #00f5ff; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.3s; border: 1px solid rgba(0, 245, 255, 0.3); }
+        .pill:hover { background: rgba(0, 245, 255, 0.2); border-color: #00f5ff; color: white; box-shadow: 0 0 15px rgba(0, 245, 255, 0.5); transform: translateY(-2px); }
+
+        /* 响应式 - 登录页面 */
+        @media (max-width: 768px) {
+            .glass-box { width: 90%; max-width: 380px; padding: 35px 25px; }
+            h2 { font-size: 1.4rem; }
+            input { padding: 12px 15px; font-size: 0.95rem; }
+            button { padding: 12px; font-size: 0.95rem; }
+            .pill { font-size: 0.8rem; padding: 7px 14px; }
+        }
+        @media (max-width: 480px) {
+            .glass-box { width: 95%; padding: 30px 20px; }
+            h2 { font-size: 1.2rem; margin-bottom: 20px; }
+            h2::before { font-size: 1.2rem; }
+            input { padding: 10px 12px; font-size: 0.9rem; margin-bottom: 15px; }
+            button { padding: 10px; font-size: 0.9rem; }
+            .btn-group { gap: 10px; }
+            .social-links { gap: 8px; margin-top: 20px; }
+            .pill { font-size: 0.75rem; padding: 6px 12px; }
+        }
+        @media (max-width: 360px) {
+            .glass-box { width: 98%; padding: 25px 15px; }
+            h2 { font-size: 1.1rem; }
+            input { font-size: 0.85rem; }
+            button { font-size: 0.85rem; }
+            .pill { font-size: 0.7rem; padding: 5px 10px; }
+        }
     </style>
 </head>
 <body>
+    <!-- 星空背景 -->
+    <div class="stars" id="starsContainer"></div>
+
+    <!-- 流星雨 -->
+    <div class="stars">
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+    </div>
+
+    <!-- 毛玻璃碎片 -->
+    <div class="glass-shards">
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+    </div>
+
+    <!-- 登录框 -->
     <div class="glass-box">
         <h2>禁止进入</h2>
         <input type="password" id="pwd" placeholder="请输入密码" autofocus autocomplete="new-password" onkeypress="if(event.keyCode===13)verify()">
@@ -606,7 +711,27 @@ function loginPage(tgGroup, tgChannel) {
             <a href="${tgGroup}" target="_blank" class="pill">✈️ 天诚交流群</a>
         </div>
     </div>
+
     <script>
+        // 生成星星背景
+        function generateStars() {
+            const starsContainer = document.getElementById('starsContainer');
+            const starCount = 200;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                const size = Math.random() * 2 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                starsContainer.appendChild(star);
+            }
+        }
+        generateStars();
+
         function gh(){fetch("?flag=github&t="+Date.now(),{keepalive:!0});window.open("https://github.com/xtgm/stallTCP1.3V1","_blank")}
         function verify(){
             const p = document.getElementById("pwd").value;
@@ -626,7 +751,7 @@ function loginPage(tgGroup, tgChannel) {
 </html>`;
 }
 
-function dashPage(host, uuid, proxyip, subpass, subdomain, converter, env, clientIP, hasAuth, tgState, cfState, add, addApi, addCsv, tgToken, tgId, cfId, cfToken, cfMail, cfKey, sysParams) {
+function dashPage(host, uuid, proxyip, subpass, subdomain, converter, env, clientIP, hasAuth, tgState, cfState, add, addApi, addCsv, tgToken, tgId, cfId, cfToken, cfMail, cfKey, sysParams, dashTitle) {
     const defaultSubLink = `https://${host}/${subpass}`;
     const pathParam = proxyip ? "/proxyip=" + proxyip : "/";
     const longLink = `https://${subdomain}/sub?uuid=${uuid}&encryption=none&security=tls&sni=${host}&alpn=h3&fp=random&allowInsecure=1&type=ws&host=${host}&path=${encodeURIComponent(pathParam)}`;
@@ -636,170 +761,1873 @@ function dashPage(host, uuid, proxyip, subpass, subdomain, converter, env, clien
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worker 控制台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5, user-scalable=yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>${dashTitle}</title>
     <style>
-        body { display: none; opacity: 0; transition: opacity 0.3s; }
-        body.loaded { display: flex; opacity: 1; }
-        :root { --bg: #121418; --card: #1e222a; --text: #e0e0e0; --border: #2a2f38; --accent: #3498db; --green: #2ecc71; --red: #e74c3c; --input-bg: #15181e; --modal-bg: #1e222a; }
-        body.light { --bg: #f0f2f5; --card: #ffffff; --text: #333333; --border: #e0e0e0; --accent: #3498db; --green: #27ae60; --red: #c0392b; --input-bg: #f9f9f9; --modal-bg: #ffffff; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; justify-content: center; }
-        .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
-        .card { background-color: var(--card); border-radius: 8px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
-        .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 600; }
-        .header-title span { color: #f1c40f; }
-        .tools { display: flex; gap: 10px; }
-        .tool-btn { width: 40px; height: 40px; background: var(--input-bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; position: relative; }
-        .tool-btn:hover { border-color: var(--accent); background: #2b303b; }
-        .tool-btn::before { content: attr(data-tooltip); position: absolute; bottom: -35px; left: 50%; transform: translateX(-50%); padding: 5px 10px; background: rgba(0,0,0,0.85); color: #fff; font-size: 12px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: 0.2s; z-index: 10; }
-        .tool-btn:hover::before { opacity: 1; visibility: visible; bottom: -40px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; position: absolute; top: 5px; right: 5px; }
-        .status-dot.on { background-color: var(--green); box-shadow: 0 0 5px var(--green); }
-        .status-dot.off { background-color: var(--red); }
-        .status-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
-        .circle-chart-box { background: var(--input-bg); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; border: 1px dashed var(--border); }
-        .circle-ring { width: 100px; height: 100px; border-radius: 50%; border: 8px solid var(--border); border-top-color: var(--green); margin-bottom: 15px; flex-shrink: 0; }
-        .circle-val { font-size: 2.2rem; font-weight: bold; color: var(--green); line-height: 1; margin-bottom: 5px; }
-        .circle-label { font-size: 0.85rem; color: #888; white-space: nowrap; }
-        .info-list { display: flex; flex-direction: column; gap: 10px; }
-        .info-item { background: var(--input-bg); padding: 12px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
-        .info-val { font-family: monospace; color: var(--green); }
-        .section-title { font-size: 0.95rem; color: var(--accent); margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .input-block { margin-bottom: 12px; }
-        label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 6px; }
-        input[type="text"], textarea { width: 100%; background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 6px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; outline: none; transition: 0.2s; box-sizing: border-box; }
-        input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
-        textarea { min-height: 100px; resize: vertical; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; }
-        .input-group-row { display: flex; gap: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { display: none; opacity: 0; transition: opacity 0.3s; overflow-x: hidden; position: relative; }
+        body.loaded { display: block; opacity: 1; }
+
+        /* 玻璃态配色 - 柔和不刺眼 */
+        :root {
+            --glass-blue: #4facfe;
+            --glass-purple: #9d7ff5;
+            --glass-cyan: #43e9e5;
+            --glass-pink: #f093fb;
+            --glass-green: #4ade80;
+            --bg-dark: #0f0f23;
+            --bg-darker: #050510;
+            --card-bg: rgba(15, 20, 40, 0.4);
+            --text: #e8eaf6;
+            --text-dim: #9ca3af;
+            --border: rgba(79, 172, 254, 0.2);
+            --glow: rgba(79, 172, 254, 0.5);
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+        }
+        body.light {
+            --glass-blue: #2563eb;
+            --glass-purple: #7c3aed;
+            --glass-cyan: #0891b2;
+            --glass-pink: #db2777;
+            --glass-green: #059669;
+            --bg-dark: #f8fafc;
+            --bg-darker: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text: #0f172a;
+            --text-dim: #475569;
+            --border: rgba(37, 99, 235, 0.2);
+            --glow: rgba(37, 99, 235, 0.3);
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+        body.light {
+            background: linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 50%, #fce7f3 100%);
+        }
+        body.light .shard {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(124, 58, 237, 0.04));
+            border: 1px solid rgba(37, 99, 235, 0.15);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+        }
+
+        /* 白色模式输入框优化 */
+        body.light input,
+        body.light textarea,
+        body.light select {
+            background: rgba(255, 255, 255, 0.95);
+            color: #0f172a;
+            border-color: rgba(37, 99, 235, 0.25);
+        }
+        body.light input:focus,
+        body.light textarea:focus,
+        body.light select:focus {
+            background: rgba(255, 255, 255, 1);
+            border-color: var(--glass-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* 白色模式系统状态优化 */
+        body.light .stat-box {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+        body.light .stat-box:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--glass-blue);
+        }
+        body.light .stat-value {
+            color: #1e40af;
+            font-weight: 700;
+        }
+        body.light .stat-label {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        /* 黑色模式系统状态优化 */
+        body:not(.light) .stat-value {
+            color: var(--glass-cyan);
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(67, 233, 229, 0.3);
+        }
+        body:not(.light) .stat-label {
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        /* 白色模式日志优化 */
+        body.light .log-entry {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(37, 99, 235, 0.2);
+        }
+        body.light .log-entry:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: var(--glass-blue);
+        }
+        body.light .log-time {
+            color: #1e40af;
+            font-weight: 600;
+        }
+        body.light .log-ip {
+            color: #0891b2;
+            font-weight: 600;
+        }
+        body.light .log-loc {
+            color: #059669;
+            font-weight: 500;
+        }
+        body.light .log-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(37, 99, 235, 0.2);
+            color: #0f172a;
+        }
+
+        /* 黑色模式日志优化 */
+        body:not(.light) .log-time {
+            color: var(--glass-cyan);
+            font-weight: 600;
+        }
+        body:not(.light) .log-ip {
+            color: var(--glass-blue);
+            font-weight: 600;
+        }
+        body:not(.light) .log-loc {
+            color: var(--glass-green);
+            font-weight: 500;
+        }
+
+        /* 深色星空背景 */
+        body {
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 白色模式星空背景 */
+        body.light {
+            background: radial-gradient(ellipse at top, #e0f2fe 0%, #ddd6fe 50%, #fce7f3 100%);
+        }
+
+        /* 星星背景 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* 流星雨特效 - 全屏真实效果 */
+        .meteor {
+            position: absolute;
+            width: 3px;
+            height: 150px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.5), transparent);
+            border-radius: 50%;
+            animation: meteor-fall linear infinite;
+            opacity: 0;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes meteor-fall {
+            0% {
+                opacity: 1;
+                transform: translateX(0) translateY(0) rotate(-45deg);
+            }
+            70% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-500px) translateY(500px) rotate(-45deg);
+            }
+        }
+        /* 更多流星，覆盖全屏 */
+        .meteor:nth-child(1) { top: 5%; left: 10%; animation-duration: 1.8s; animation-delay: 0s; }
+        .meteor:nth-child(2) { top: 15%; left: 30%; animation-duration: 2.2s; animation-delay: 0.8s; }
+        .meteor:nth-child(3) { top: 8%; left: 50%; animation-duration: 2.5s; animation-delay: 1.5s; }
+        .meteor:nth-child(4) { top: 20%; left: 70%; animation-duration: 2s; animation-delay: 2.2s; }
+        .meteor:nth-child(5) { top: 12%; left: 85%; animation-duration: 2.3s; animation-delay: 3s; }
+        .meteor:nth-child(6) { top: 25%; left: 20%; animation-duration: 2.1s; animation-delay: 3.8s; }
+        .meteor:nth-child(7) { top: 18%; left: 45%; animation-duration: 2.4s; animation-delay: 4.5s; }
+        .meteor:nth-child(8) { top: 10%; left: 65%; animation-duration: 1.9s; animation-delay: 5.2s; }
+        .meteor:nth-child(9) { top: 22%; left: 80%; animation-duration: 2.6s; animation-delay: 6s; }
+        .meteor:nth-child(10) { top: 7%; left: 35%; animation-duration: 2.2s; animation-delay: 6.8s; }
+
+        /* 白色模式流星 */
+        body.light .meteor {
+            background: linear-gradient(to bottom, rgba(37, 99, 235, 1), rgba(37, 99, 235, 0.5), transparent);
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
+        }
+        body.light .star {
+            background: rgba(37, 99, 235, 0.5);
+            box-shadow: 0 0 4px rgba(37, 99, 235, 0.6);
+        }
+
+        /* 玻璃碎裂动态背景 */
+        .glass-shards-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .shard {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.08), rgba(157, 127, 245, 0.05));
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: shardFloat 25s infinite ease-in-out;
+        }
+        .shard:nth-child(1) { width: 180px; height: 180px; top: 5%; left: 10%; clip-path: polygon(30% 0%, 70% 10%, 100% 40%, 90% 80%, 50% 100%, 10% 90%, 0% 50%); animation-delay: 0s; }
+        .shard:nth-child(2) { width: 140px; height: 200px; top: 50%; left: 5%; clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%); animation-delay: -8s; }
+        .shard:nth-child(3) { width: 220px; height: 160px; top: 10%; right: 8%; clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%); animation-delay: -15s; }
+        .shard:nth-child(4) { width: 150px; height: 150px; bottom: 10%; right: 15%; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); animation-delay: -20s; }
+        .shard:nth-child(5) { width: 190px; height: 130px; top: 40%; left: 3%; clip-path: polygon(40% 0%, 100% 20%, 90% 70%, 30% 100%, 0% 60%); animation-delay: -10s; }
+        .shard:nth-child(6) { width: 130px; height: 180px; bottom: 15%; left: 45%; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); animation-delay: -18s; }
+        .shard:nth-child(7) { width: 170px; height: 140px; top: 70%; right: 25%; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); animation-delay: -5s; }
+        @keyframes shardFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+            25% { transform: translateY(-25px) rotate(3deg); opacity: 0.6; }
+            50% { transform: translateY(-40px) rotate(-2deg); opacity: 0.5; }
+            75% { transform: translateY(-20px) rotate(4deg); opacity: 0.7; }
+        }
+
+        /* 主容器 - 侧边栏布局 */
+        .container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* 左侧边栏 - 玻璃态 */
+        .sidebar {
+            width: 280px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            flex-shrink: 0;
+        }
+
+        /* 顶部工具栏（右上角固定，带边框容器） */
+        .top-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 8px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 工具按钮组（右上角固定） */
+        .top-tools {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .tool-btn {
+            width: 42px;
+            height: 42px;
+            background: rgba(79, 172, 254, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+        .tool-btn:hover {
+            background: rgba(79, 172, 254, 0.25);
+            border-color: var(--glass-blue);
+            box-shadow: 0 4px 15px var(--glow);
+            transform: translateY(-2px);
+        }
+        .tool-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 侧边栏Logo */
+        .logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-icon {
+            font-size: 3rem;
+            filter: drop-shadow(0 0 15px var(--glass-blue));
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--glass-blue), var(--glass-purple), var(--glass-cyan), var(--glass-pink));
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            text-align: center;
+            animation: logoGradient 4s ease infinite;
+            filter: drop-shadow(0 0 8px var(--glass-blue)) drop-shadow(0 0 12px var(--glass-purple));
+        }
+        @keyframes logoGradient {
+            0% {
+                background-position: 0% 50%;
+                filter: drop-shadow(0 0 8px var(--glass-blue)) drop-shadow(0 0 12px var(--glass-purple));
+            }
+            25% {
+                filter: drop-shadow(0 0 8px var(--glass-purple)) drop-shadow(0 0 12px var(--glass-cyan));
+            }
+            50% {
+                background-position: 100% 50%;
+                filter: drop-shadow(0 0 8px var(--glass-cyan)) drop-shadow(0 0 12px var(--glass-pink));
+            }
+            75% {
+                filter: drop-shadow(0 0 8px var(--glass-pink)) drop-shadow(0 0 12px var(--glass-blue));
+            }
+            100% {
+                background-position: 0% 50%;
+                filter: drop-shadow(0 0 8px var(--glass-blue)) drop-shadow(0 0 12px var(--glass-purple));
+            }
+        }
+        .logo-sub {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-align: center;
+            font-weight: 500;
+        }
+        /* 白色模式Logo优化 */
+        body.light .logo-sub {
+            color: #64748b;
+        }
+
+        /* 导航菜单 - 垂直列表 */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .nav-item {
+            padding: 12px 15px;
+            background: rgba(79, 172, 254, 0.05);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text);
+            position: relative;
+            overflow: hidden;
+        }
+        /* 菜单文字幻彩渐变 */
+        .nav-item {
+            background: linear-gradient(135deg, var(--glass-blue), var(--glass-purple), var(--glass-cyan), var(--glass-pink));
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: menuTextGradient 5s ease infinite;
+        }
+        @keyframes menuTextGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* 白色模式菜单文字优化 - 纯色深色文字 */
+        body.light .nav-item {
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
+            color: #1e293b;
+            font-weight: 700;
+            animation: none;
+        }
+        body.light .nav-item:hover {
+            color: #0f172a;
+        }
+        body.light .nav-item.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+        }
+        body.light .nav-item.active .icon,
+        body.light .nav-item.active {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
+            color: #ffffff;
+            animation: none;
+        }
+        /* 恢复背景 */
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(79, 172, 254, 0.05);
+            border-radius: 12px;
+            z-index: -1;
+        }
+        body.light .nav-item::after {
+            background: rgba(37, 99, 235, 0.08);
+        }
+        /* 波纹点击效果 */
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        .nav-item:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        .nav-item:hover {
+            background: rgba(79, 172, 254, 0.15);
+            border-color: var(--glass-blue);
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px var(--glow);
+        }
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--glass-blue), var(--glass-purple));
+            border-color: var(--glass-blue);
+            color: white;
+            box-shadow: 0 4px 20px var(--glow);
+            transform: translateX(5px);
+            animation: gradientShift 3s ease infinite;
+            background-size: 200% 200%;
+        }
+        /* 激活菜单文字幻彩渐变 */
+        .nav-item.active .icon,
+        .nav-item.active {
+            background: linear-gradient(135deg, #fff, #e0f2fe, #ddd6fe, #fce7f3, #fff);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textGradientShift 4s ease infinite;
+        }
+        /* 文字渐变动画 */
+        @keyframes textGradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* 幻彩渐变动画 */
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+                background: linear-gradient(135deg, var(--glass-blue), var(--glass-purple), var(--glass-cyan));
+            }
+            33% {
+                background-position: 50% 50%;
+                background: linear-gradient(135deg, var(--glass-purple), var(--glass-cyan), var(--glass-pink));
+            }
+            66% {
+                background-position: 100% 50%;
+                background: linear-gradient(135deg, var(--glass-cyan), var(--glass-pink), var(--glass-blue));
+            }
+            100% {
+                background-position: 0% 50%;
+                background: linear-gradient(135deg, var(--glass-blue), var(--glass-purple), var(--glass-cyan));
+            }
+        }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--glass-cyan), var(--glass-blue), var(--glass-purple), var(--glass-pink), var(--glass-cyan));
+            border-radius: 12px;
+            z-index: -1;
+            opacity: 0.5;
+            filter: blur(8px);
+            animation: borderGlow 3s linear infinite;
+            background-size: 300% 300%;
+        }
+        @keyframes borderGlow {
+            0% { opacity: 0.3; background-position: 0% 50%; }
+            50% { opacity: 0.6; background-position: 100% 50%; }
+            100% { opacity: 0.3; background-position: 0% 50%; }
+        }
+        .nav-item .icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            display: block;
+            width: 100%;
+            min-width: 0;
+        }
+
+        /* 工具按钮提示 */
+        .tool-btn::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--glass-cyan);
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.2s;
+            z-index: 10;
+            border: 1px solid var(--glass-cyan);
+            border-radius: 6px;
+        }
+        .tool-btn:hover::before { opacity: 1; visibility: visible; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            animation: statusPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 5px currentColor; }
+            50% { opacity: 0.5; transform: scale(1.3); box-shadow: 0 0 15px currentColor; }
+        }
+        .status-dot.on {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+        .status-dot.off {
+            background-color: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        /* 主内容区 - 网格布局 */
+        .main-content {
+            display: block;
+            width: 100%;
+        }
+
+        /* 3D 球体统计卡片 */
+        .sphere-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .sphere-card:hover {
+            border-color: var(--glass-blue);
+            box-shadow: 0 12px 40px var(--glow);
+            transform: translateY(-5px);
+        }
+        .sphere-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--glass-blue), var(--glass-purple), var(--glass-cyan));
+            opacity: 0.6;
+        }
+
+        /* 3D 圆环统计球体 - 优化版 */
+        .stats-sphere {
+            width: 240px;
+            height: 240px;
+            margin: 25px auto 15px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .sphere-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            animation: sphereRotate 8s linear infinite;
+            will-change: transform;
+        }
+        .sphere-ring:nth-child(1) {
+            width: 220px;
+            height: 220px;
+            border-top-color: var(--glass-blue);
+            border-right-color: var(--glass-blue);
+            animation-duration: 6s;
+        }
+        .sphere-ring:nth-child(2) {
+            width: 185px;
+            height: 185px;
+            border-bottom-color: var(--glass-purple);
+            border-left-color: var(--glass-purple);
+            animation-duration: 8s;
+            animation-direction: reverse;
+        }
+        .sphere-ring:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            border-top-color: var(--glass-cyan);
+            border-bottom-color: var(--glass-cyan);
+            animation-duration: 10s;
+        }
+        @keyframes sphereRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 球体中心 - 只显示数字 */
+        .sphere-center {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        /* 球体数字 - 完全防止溢出 */
+        .sphere-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--glass-blue), var(--glass-cyan));
+            background: -webkit-linear-gradient(135deg, var(--glass-blue), var(--glass-cyan));
+            background: -moz-linear-gradient(135deg, var(--glass-blue), var(--glass-cyan));
+            -webkit-background-clip: text;
+            -moz-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            -moz-text-fill-color: transparent;
+            color: var(--glass-blue);
+            font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+            line-height: 1;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            -webkit-hyphens: manual;
+            -moz-hyphens: manual;
+            -ms-hyphens: manual;
+            hyphens: manual;
+            display: block;
+            width: 100%;
+            max-width: 160px;
+            max-height: 160px;
+            overflow: hidden;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 根据内容长度自动缩小字体 */
+        .sphere-value[data-length="short"] { font-size: 3rem; }
+        .sphere-value[data-length="medium"] { font-size: 2.2rem; }
+        .sphere-value[data-length="long"] { font-size: 1.6rem; }
+        .sphere-value[data-length="verylong"] { font-size: 1.2rem; }
+
+        /* 球体下方标签 */
+        .sphere-labels {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .sphere-label {
+            font-size: 1rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            line-height: 1.5;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .sphere-subtitle {
+            font-size: 0.85rem;
+            color: var(--glass-cyan);
+            line-height: 1.4;
+            opacity: 0.95;
+            display: block;
+        }
+
+        /* 玻璃态卡片样式 */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .card:hover {
+            border-color: var(--glass-blue);
+            box-shadow: 0 12px 40px var(--glow);
+            transform: translateY(-3px);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--glass-blue), var(--glass-purple), var(--glass-cyan));
+            opacity: 0.6;
+        }
+
+        /* 卡片标题 */
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 2px 8px rgba(79, 172, 254, 0.5);
+        }
+        .card-title .icon {
+            font-size: 1.3rem;
+            filter: drop-shadow(0 0 10px var(--glass-cyan));
+        }
+
+        /* 白色模式标题 */
+        body.light .card-title {
+            color: #000000;
+            text-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        /* 统计面板 */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: rgba(79, 172, 254, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .stat-box:hover {
+            background: rgba(79, 172, 254, 0.1);
+            border-color: var(--glass-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px var(--glow);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--glass-cyan), var(--glass-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+            display: block;
+        }
+        .stat-value.ip-value {
+            font-size: clamp(0.75rem, 2vw, 1rem);
+            word-break: break-all;
+            white-space: normal;
+            line-height: 1.3;
+            max-height: 2.6em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* 输入框样式 */
+        .input-block { margin-bottom: 15px; }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--glass-cyan);
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            background: rgba(15, 20, 40, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            padding: 12px 15px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--glass-blue);
+            background: rgba(15, 20, 40, 0.9);
+            box-shadow: 0 0 20px var(--glow);
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .input-group-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
         .input-group-row input { flex: 1; }
-        .btn-check { background: #1f3a52; color: #fff; border: 1px solid #2b303b; padding: 0 15px; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight: bold; }
-        .btn-check:hover { background: #2a4d6e; }
-        .btn-copy { background: #1f3a52; color: #fff; border: 1px solid #2b303b; padding: 0 15px; border-radius: 4px; cursor: pointer; }
-        .btn-main { flex: 2; background: var(--green); color: #fff; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-test { flex: 1; background: #1f3a52; color: #fff; border: 1px solid #1e4a75; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .checkbox-row { display: flex; justify-content: flex-end; align-items: center; gap: 5px; font-size: 0.85rem; color: #888; margin-bottom: 5px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: var(--modal-bg); padding: 25px; border-radius: 12px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid var(--border); }
-        .modal-head { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1.2rem; align-items: center; }
-        .modal-head span { display: flex; align-items: center; gap: 8px; }
-        .close-btn { cursor: pointer; color: #888; font-size: 1.2rem; }
-        .modal-btns { display: flex; gap: 10px; margin-top: 25px; }
-        .modal-btns button { flex: 1; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 0.95rem; color: white; transition: 0.2s; }
-        .btn-valid { background: #2f80ed; } .btn-save { background: #f2994a; } .btn-cancel { background: #e0e0e0; color: #333 !important; } .btn-clear { background: #e74c3c; }
-        .log-box { font-family: monospace; font-size: 0.8rem; max-height: 200px; overflow-y: auto; background: var(--input-bg); padding: 10px; border-radius: 4px; }
-        .log-entry { border-bottom: 1px solid var(--border); padding: 8px 0; display: flex; align-items: center; gap: 10px; }
-        .log-time { color: #888; width: 150px; flex-shrink: 0; font-size: 0.85rem; font-family: monospace; }
-        .log-ip { color: var(--text); width: 260px; flex-shrink: 0; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .log-loc { color: #888; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
-        .log-tag { width: 80px; text-align: center; background: #f39c12; color: white; padding: 2px 0; border-radius: 4px; font-size: 0.75rem; flex-shrink: 0; }
-        .log-tag.green { background: var(--green); }
-        .wl-table { width:100%; border-collapse: collapse; font-size:0.85rem; margin-top:10px; }
-        .wl-table th, .wl-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
-        .wl-table th { color: #888; font-weight: normal; }
-        .btn-del { background: var(--red); color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem;}
-        .sys-tag { background: #7f8c8d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 20px;
+            border: 1px solid;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+            border-radius: 50%;
+        }
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--glass-blue), var(--glass-purple));
+            border-color: var(--glass-blue);
+            color: white;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 25px var(--glow);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--glass-cyan), var(--glass-blue));
+            border-color: var(--glass-cyan);
+            color: white;
+        }
+        .btn-secondary:hover {
+            box-shadow: 0 0 25px rgba(67, 233, 229, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--glass-green), #22c55e);
+            border-color: var(--success);
+            color: white;
+        }
+        .btn-success:hover {
+            box-shadow: 0 0 25px var(--success);
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            border-color: var(--danger);
+            color: white;
+        }
+        .btn-danger:hover {
+            box-shadow: 0 0 25px var(--danger);
+            transform: translateY(-2px);
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-group .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* 日志和表格 */
+        .log-box {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(15, 20, 40, 0.6);
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .log-entry {
+            border-bottom: 1px solid rgba(79, 172, 254, 0.2);
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: 0.3s;
+        }
+        .log-entry:hover {
+            background: rgba(79, 172, 254, 0.1);
+            padding-left: 10px;
+            border-left: 2px solid var(--glass-cyan);
+        }
+        .log-time { color: var(--glass-cyan); width: 150px; font-size: 0.85rem; }
+        .log-ip { color: var(--text); width: 200px; font-family: monospace; }
+        .log-loc { color: var(--text-dim); flex: 1; font-size: 0.85rem; }
+        .log-tag {
+            padding: 4px 10px;
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: #000;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+        .log-tag.green {
+            background: linear-gradient(135deg, var(--success), #22c55e);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .wl-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
+        .wl-table th, .wl-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .wl-table th {
+            color: var(--glass-cyan);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+        }
+        .wl-table tr:hover { background: rgba(79, 172, 254, 0.05); }
+        .btn-del {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.3s;
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .btn-del:hover {
+            box-shadow: 0 0 20px var(--danger);
+            transform: scale(1.05);
+        }
+        .sys-tag {
+            background: linear-gradient(135deg, #64748b, #475569);
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(100, 116, 139, 0.3);
+        }
         .source-tag { font-size: 0.75rem; margin-top: 4px; display: block; }
-        .source-tag.sys { color: #f1c40f; } .source-tag.man { color: #2ecc71; }
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 8px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; }
-        .refresh-btn { width: 100%; background: #1f3a52; color: #64b5f6; border: 1px solid #1e4a75; padding: 10px; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: 0.2s; font-weight:bold; }
-        @media (max-width: 600px) { .status-grid { grid-template-columns: 1fr; } .input-group-row { flex-direction:column; } }
+        .source-tag.sys { color: var(--warning); text-shadow: 0 0 8px var(--warning); }
+        .source-tag.man { color: var(--success); text-shadow: 0 0 8px var(--success); }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 10px 50px var(--glow);
+            position: relative;
+        }
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--glass-blue), var(--glass-cyan));
+            box-shadow: 0 0 15px var(--glass-blue);
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            align-items: center;
+            background: linear-gradient(135deg, var(--glass-cyan), var(--glass-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .modal-head span { display: flex; align-items: center; gap: 10px; }
+        .close-btn {
+            cursor: pointer;
+            color: var(--text);
+            font-size: 1.5rem;
+            transition: 0.3s;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .close-btn:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+            box-shadow: 0 0 15px var(--danger);
+            transform: rotate(90deg);
+        }
+        .modal-btns { display: flex; gap: 10px; margin-top: 25px; flex-wrap: wrap; }
+        .modal-btns button { flex: 1; min-width: 100px; }
+
+        /* Toast提示 */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--success), #22c55e);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 12px;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            font-weight: 700;
+            box-shadow: 0 0 25px var(--success);
+            border: 2px solid var(--success);
+            z-index: 2000;
+        }
+
+        /* 响应式 - 全平台优化 */
+
+        /* 平板及以下 - 侧边栏变为顶部栏 */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 10px;
+                padding-top: 70px;
+            }
+            .sidebar {
+                width: 100%;
+                position: relative;
+                top: 0;
+                padding: 20px;
+            }
+            .logo {
+                flex-direction: row;
+                justify-content: center;
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+            }
+            .logo-icon { font-size: 2rem; }
+            .logo-text { font-size: 1rem; }
+            .nav-menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .nav-item {
+                flex: 1;
+                min-width: 120px;
+                justify-content: center;
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+            .top-nav {
+                top: 10px;
+                right: 10px;
+                gap: 6px;
+                padding: 6px;
+            }
+            .tool-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+            .content-section.active {
+                grid-template-columns: 1fr;
+            }
+            .stats-panel { grid-template-columns: repeat(2, 1fr); }
+            .stats-sphere { width: 220px; height: 220px; }
+            .sphere-ring:nth-child(1) { width: 200px; height: 200px; }
+            .sphere-ring:nth-child(2) { width: 165px; height: 165px; }
+            .sphere-ring:nth-child(3) { width: 130px; height: 130px; }
+        }
+
+        /* 手机端 */
+        @media (max-width: 768px) {
+            .container { padding: 8px; padding-top: 65px; }
+            .sidebar { padding: 15px; }
+            .nav-menu { flex-direction: column; }
+            .nav-item {
+                width: 100%;
+                min-width: auto;
+            }
+            .top-nav {
+                top: 8px;
+                right: 8px;
+                gap: 5px;
+                padding: 5px;
+                border-radius: 12px;
+            }
+            .tool-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 0.95rem;
+                border-radius: 10px;
+            }
+            .tool-btn::before {
+                display: none;
+            }
+            .stats-panel { grid-template-columns: 1fr; }
+            .stats-sphere { width: 180px; height: 180px; margin: 20px auto 10px; }
+            .sphere-ring:nth-child(1) { width: 165px; height: 165px; border-width: 2.5px; }
+            .sphere-ring:nth-child(2) { width: 135px; height: 135px; border-width: 2.5px; }
+            .sphere-ring:nth-child(3) { width: 105px; height: 105px; border-width: 2.5px; }
+            .sphere-value[data-length="short"] { font-size: 2.5rem; }
+            .sphere-value[data-length="medium"] { font-size: 1.8rem; }
+            .sphere-value[data-length="long"] { font-size: 1.4rem; }
+            .sphere-value[data-length="verylong"] { font-size: 1rem; }
+            .sphere-label { font-size: 0.85rem; }
+            .sphere-subtitle { font-size: 0.75rem; }
+            .input-group-row { flex-direction: column; }
+            .btn-group { flex-direction: column; }
+            .log-entry { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .log-time, .log-ip, .log-loc { width: 100%; }
+        }
+
+        /* 小屏手机 */
+        @media (max-width: 480px) {
+            .container { padding-top: 60px; }
+            .top-nav {
+                top: 6px;
+                right: 6px;
+                gap: 4px;
+                padding: 4px;
+            }
+            .tool-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 0.9rem;
+            }
+            .stats-sphere { width: 160px; height: 160px; }
+            .sphere-ring:nth-child(1) { width: 148px; height: 148px; border-width: 2px; }
+            .sphere-ring:nth-child(2) { width: 122px; height: 122px; border-width: 2px; }
+            .sphere-ring:nth-child(3) { width: 96px; height: 96px; border-width: 2px; }
+            .sphere-value[data-length="short"] { font-size: 2rem; }
+            .sphere-value[data-length="medium"] { font-size: 1.5rem; }
+            .sphere-value[data-length="long"] { font-size: 1.2rem; }
+            .sphere-value[data-length="verylong"] { font-size: 0.9rem; }
+            .sphere-label { font-size: 0.75rem; letter-spacing: 1px; }
+            .sphere-subtitle { font-size: 0.68rem; }
+        }
+
+        /* 超小屏 */
+        @media (max-width: 360px) {
+            .top-nav {
+                top: 5px;
+                right: 5px;
+                gap: 3px;
+                padding: 3px;
+            }
+            .tool-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* 内容区显示控制 */
+        .content-section {
+            display: none;
+            opacity: 0;
+            animation: fadeOut 0.3s ease-out;
+        }
+        .content-section.active {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            opacity: 1;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* 淡入淡出动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* 单列布局的面板 */
+        #section-subscription.active,
+        #section-whitelist.active,
+        #section-nodes.active,
+        #section-logs.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        #section-subscription .card,
+        #section-whitelist .card,
+        #section-nodes .card,
+        #section-logs .card {
+            margin-bottom: 20px;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        /* 卡片滑入动画 */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body id="mainBody">
+    <!-- 玻璃碎裂背景 -->
+    <div class="glass-shards-bg">
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+        <div class="shard"></div>
+    </div>
+
+    <!-- 星空背景 -->
+    <div class="stars" id="starsContainer"></div>
+
+    <!-- 流星雨 -->
+    <div class="stars">
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+    </div>
+
     <div class="container">
-        <div class="card" style="padding: 15px 20px;">
-            <div class="header" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
-                <div class="header-title"><span>⚡</span> Worker 控制台</div>
-                <div class="tools">
-                    <button class="tool-btn" onclick="toggleTheme()" data-tooltip="切换黑/白主题">🌗</button>
-                    <button class="tool-btn" onclick="showModal('tgModal')" data-tooltip="添加bot机器人监控">🤖 <span class="status-dot ${tgState ? 'on' : 'off'}"></span></button>
-                    <button class="tool-btn" onclick="showModal('cfModal')" data-tooltip="添加cloudflare API请求数统计">☁️ <span class="status-dot ${cfState ? 'on' : 'off'}"></span></button>
-                    <button class="tool-btn logout-btn" onclick="logout()" style="background:#c0392b;color:white" data-tooltip="退出登录">⏻</button>
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">💎</div>
+                <div>
+                    <div class="logo-text">玻璃态控制台</div>
+                    <div class="logo-sub">GLASS DASHBOARD</div>
+                </div>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" onclick="showSection('dashboard')">
+                    <span class="icon">📊</span> 控制台
+                </div>
+                <div class="nav-item" onclick="showSection('subscription')">
+                    <span class="icon">🚀</span> 订阅
+                </div>
+                <div class="nav-item" onclick="showSection('whitelist')">
+                    <span class="icon">🛡️</span> 白名单
+                </div>
+                <div class="nav-item" onclick="showSection('nodes')">
+                    <span class="icon">🛠️</span> 自定义节点
+                </div>
+                <div class="nav-item" onclick="showSection('logs')">
+                    <span class="icon">📋</span> 日志
                 </div>
             </div>
         </div>
-        <div class="card status-grid">
-            <div class="circle-chart-box"><div class="circle-ring"></div><div class="circle-val" id="reqCount">...</div><div class="circle-label">Cloudflare 统计 / 今日请求</div></div>
-            <div style="display:flex; flex-direction:column; justify-content:center;">
-                <div class="info-list">
-                    <div class="info-item"><span style="color:#888">Cloudflare API</span><span class="info-val" id="apiStatus" style="color: #64b5f6;">Check...</span></div>
-                    <div class="info-item"><span style="color:#888">Google (连通)</span><span class="info-val" id="googleStatus">Check...</span></div>
-                    <div class="info-item"><span style="color:#888">当前 IP</span><span class="info-val" id="currentIp" style="font-size:0.8rem">...</span></div>
-                    <div class="info-item"><span style="color:#888">DB/KV 状态</span><span class="info-val" id="kvStatus">...</span></div>
+
+        <!-- 右上角工具栏 -->
+        <div class="top-nav">
+            <button class="tool-btn" onclick="toggleTheme()" data-tooltip="切换主题">🌗</button>
+            <button class="tool-btn" onclick="showModal('tgModal')" data-tooltip="TG通知">🤖 <span class="status-dot ${tgState ? 'on' : 'off'}"></span></button>
+            <button class="tool-btn" onclick="showModal('cfModal')" data-tooltip="CF统计">☁️ <span class="status-dot ${cfState ? 'on' : 'off'}"></span></button>
+            <button class="tool-btn" onclick="logout()" style="background:rgba(248,113,113,0.2);border-color:var(--danger)" data-tooltip="退出">⏻</button>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 控制台面板 -->
+            <div id="section-dashboard" class="content-section active">
+                <!-- 3D 球体统计卡片 -->
+                <div class="sphere-card">
+                    <div class="stats-sphere">
+                        <div class="sphere-ring"></div>
+                        <div class="sphere-ring"></div>
+                        <div class="sphere-ring"></div>
+                        <div class="sphere-center">
+                            <div class="sphere-value" id="reqCount" data-length="short">0</div>
+                        </div>
+                    </div>
+                    <div class="sphere-labels">
+                        <div class="sphere-label">今日请求</div>
+                        <div class="sphere-subtitle">Cloudflare 统计</div>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%;margin-top:20px" onclick="updateStats()">🔄 刷新统计</button>
+
+                    <!-- 系统状态 - 移到按钮下方 -->
+                    <div style="margin-top:25px;padding-top:20px;border-top:1px solid var(--border)">
+                        <div class="card-title" style="margin-bottom:15px"><span class="icon">📊</span> 系统状态</div>
+                        <div class="stats-panel">
+                            <div class="stat-box">
+                                <div class="stat-label">当前IP</div>
+                                <div class="stat-value ip-value" id="currentIp">...</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Google延迟</div>
+                                <div class="stat-value" id="googleStatus">...</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">存储状态</div>
+                                <div class="stat-value" id="kvStatus">...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="refresh-btn" onclick="updateStats()">🔄 刷新状态</button>
             </div>
-        </div>
-        <div class="card">
-            <div class="section-title">🚀 自适应订阅 (仅上游)</div>
-            <div style="display:flex; gap:10px; margin-bottom:15px;"><input type="text" id="autoSub" value="${defaultSubLink}" readonly style="flex:1"><button class="btn-copy" onclick="copyId('autoSub')">复制</button></div>
-            <div class="input-block"><label>订阅源地址 (Sub Domain)</label><input type="text" id="subDom" value="${subdomain}" oninput="updateLink()"></div>
-            <div class="input-block"><label>Worker 域名 (SNI/Host)</label><input type="text" id="hostDom" value="${host}" oninput="updateLink()"></div>
-            <div class="input-block"><label>ProxyIP (优选)</label><div class="input-group-row"><input type="text" id="pIp" value="${proxyip}" oninput="updateLink()"><button class="btn-check" onclick="checkProxy()">检测 ProxyIP</button></div></div>
-            <div class="checkbox-row"><input type="checkbox" id="clashMode" onchange="toggleClash()"><label for="clashMode">启用 Clash 模式</label></div>
-            <div class="input-block"><label>手动订阅链接生成</label><textarea id="finalLink">${longLink}</textarea></div>
-            <div class="action-btns"><button class="btn-main" onclick="copyId('finalLink')">复制链接</button><button class="btn-test" onclick="testSub()">测试访问</button></div>
-        </div>
-        <div class="card">
-            <div class="section-title" style="justify-content:space-between"><span>🛡️ 白名单 IP 管理</span><button class="tool-btn" onclick="loadWhitelist()" style="width:auto;padding:6px 12px;font-size:0.8rem">刷新</button></div>
-           <div class="input-group-row" style="margin-bottom:10px"><input type="text" id="newWhitelistIp" placeholder="输入 IP 地址 (IPv4/IPv6)"><button class="btn-check" onclick="addWhitelist()" style="background:var(--green);border:none;">添加白名单</button></div>
-            <div style="max-height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:4px;"><table class="wl-table"><thead><tr><th>IP 地址</th><th style="width:80px">操作</th></tr></thead><tbody id="whitelistBody"><tr><td colspan="2" style="text-align:center">加载中...</td></tr></tbody></table></div>
-            <div style="font-size:0.75rem; color:#888; margin-top:5px">提示：🔒 系统内置 IP 需要修改代码或环境变量才能删除。</div>
-        </div>
-        <div class="card">
-            <div class="section-title" style="justify-content:space-between"><span>🛠️ 优选 IP 与 远程配置</span><button class="tool-btn" onclick="saveNodeConfig()" style="width:auto;padding:6px 12px;font-size:0.8rem;background:var(--green);border:none;color:white;font-weight:bold;">💾 保存配置</button></div>
-            <div style="font-size:0.8rem;color:#e74c3c;margin-bottom:10px;">⚠️ 注意：若要在此生效，请确保 Cloudflare 后台未设置对应环境变量 (ADD/ADDAPI/ADDCSV)</div>
-            <div class="input-block"><label>ADD - 本地优选 IP (格式: IP:Port#Name，一行一个)</label><textarea id="inpAdd" placeholder="1.1.1.1:443#US">${safeVal(add)}</textarea></div>
-            <div class="input-block"><label>ADDAPI - 远程优选 TXT 链接 (支持多行)</label><textarea id="inpAddApi" placeholder="https://example.com/ips.txt">${safeVal(addApi)}</textarea></div>
-             <div class="input-block"><label>ADDCSV - 远程优选 CSV 链接 (支持多行)</label><textarea id="inpAddCsv" placeholder="https://example.com/ips.csv">${safeVal(addCsv)}</textarea></div>
-        </div>
-        <div class="card">
-            <div class="section-title" style="justify-content:space-between"><span>📋 操作日志 (DB/KV 4MB)</span><button class="tool-btn" onclick="loadLogs()" style="width:auto;padding:6px 12px;font-size:0.8rem">刷新</button></div>
-            <div class="log-box" id="logBox">Loading logs...</div>
+
+            <!-- 订阅管理面板 -->
+            <div id="section-subscription" class="content-section">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🚀</span> 快速订阅</div>
+                    <div class="input-group-row" style="margin-bottom:15px">
+                        <input type="text" id="autoSub" value="${defaultSubLink}" readonly style="flex:1">
+                        <button class="btn btn-secondary" onclick="copyId('autoSub')">复制</button>
+                    </div>
+                    <div class="input-block">
+                        <label>订阅源地址 (Sub Domain)</label>
+                        <input type="text" id="subDom" value="${subdomain}" oninput="updateLink()">
+                    </div>
+                    <div class="input-block">
+                        <label>Worker 域名 (SNI/Host)</label>
+                        <input type="text" id="hostDom" value="${host}" oninput="updateLink()">
+                    </div>
+                    <div class="input-block">
+                        <label>ProxyIP (优选)</label>
+                        <div class="input-group-row">
+                            <input type="text" id="pIp" value="${proxyip}" oninput="updateLink()">
+                            <button class="btn btn-primary" onclick="checkProxy()">检测</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px;font-size:0.85rem">
+                        <input type="checkbox" id="clashMode" onchange="toggleClash()">
+                        <label for="clashMode" style="margin:0;text-transform:none">启用 Clash 模式</label>
+                    </div>
+                    <div class="input-block">
+                        <label>手动订阅链接</label>
+                        <textarea id="finalLink">${longLink}</textarea>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="copyId('finalLink')">复制链接</button>
+                        <button class="btn btn-primary" onclick="testSub()">测试访问</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 白名单面板 -->
+            <div id="section-whitelist" class="content-section">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🛡️</span> 白名单管理</div>
+                    <div class="input-group-row" style="margin-bottom:15px">
+                        <input type="text" id="newWhitelistIp" placeholder="输入 IP 地址 (IPv4/IPv6)">
+                        <button class="btn btn-success" onclick="addWhitelist()">添加</button>
+                        <button class="btn btn-secondary" onclick="loadWhitelist()">刷新</button>
+                    </div>
+                    <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border)">
+                        <table class="wl-table">
+                            <thead><tr><th>IP 地址</th><th style="width:100px">操作</th></tr></thead>
+                            <tbody id="whitelistBody"><tr><td colspan="2" style="text-align:center">加载中...</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-dim);margin-top:10px">💡 提示：系统内置 IP 需要修改代码或环境变量才能删除</div>
+                </div>
+            </div>
+
+            <!-- 节点配置面板 -->
+            <div id="section-nodes" class="content-section">
+                <div class="card">
+                    <div class="card-title"><span class="icon">🛠️</span> 优选IP与远程配置</div>
+                    <div style="font-size:0.8rem;color:var(--danger);margin-bottom:15px;padding:10px;background:rgba(255,0,64,0.1);border-left:3px solid var(--danger)">
+                        ⚠️ 注意：若要在此生效，请确保 Cloudflare 后台未设置对应环境变量 (ADD/ADDAPI/ADDCSV)
+                    </div>
+                    <div class="input-block">
+                        <label>ADD - 本地优选 IP (格式: IP:Port#Name，一行一个)</label>
+                        <textarea id="inpAdd" placeholder="1.1.1.1:443#US">${safeVal(add)}</textarea>
+                    </div>
+                    <div class="input-block">
+                        <label>ADDAPI - 远程优选 TXT 链接 (支持多行)</label>
+                        <textarea id="inpAddApi" placeholder="https://example.com/ips.txt">${safeVal(addApi)}</textarea>
+                    </div>
+                    <div class="input-block">
+                        <label>ADDCSV - 远程优选 CSV 链接 (支持多行)</label>
+                        <textarea id="inpAddCsv" placeholder="https://example.com/ips.csv">${safeVal(addCsv)}</textarea>
+                    </div>
+                    <button class="btn btn-success" style="width:100%" onclick="saveNodeConfig()">💾 保存配置</button>
+                </div>
+            </div>
+
+            <!-- 日志面板 -->
+            <div id="section-logs" class="content-section">
+                <div class="card">
+                    <div class="card-title">
+                        <span><span class="icon">📋</span> 操作日志</span>
+                    </div>
+                    <div class="log-box" id="logBox">加载中...</div>
+                    <button class="btn btn-secondary" style="width:100%;margin-top:15px" onclick="loadLogs()">🔄 刷新日志</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- TG配置模态框 -->
     <div id="tgModal" class="modal">
         <div class="modal-content">
             <div class="modal-head"><span>🤖 Telegram 通知配置</span><span class="close-btn" onclick="closeModal('tgModal')">×</span></div>
-            <label>Bot Token</label><input type="text" id="tgToken" placeholder="123456:ABC-DEF..." value="${safeVal(tgToken)}">${getStatusLabel(tgToken, sysParams.tgToken)}
-            <label style="margin-top:10px">Chat ID</label><input type="text" id="tgId" placeholder="123456789" value="${safeVal(tgId)}">${getStatusLabel(tgId, sysParams.tgId)}
-            <div class="modal-btns"><button class="btn-valid" onclick="validateApi('tg')">可用性验证</button><button class="btn-save" onclick="saveConfig({TG_BOT_TOKEN: val('tgToken'), TG_CHAT_ID: val('tgId')}, 'tgModal')">保存</button><button class="btn-clear" onclick="clearConfig('tg')">清除配置</button><button class="btn-cancel" onclick="closeModal('tgModal')">取消</button></div>
+            <div class="input-block">
+                <label>Bot Token</label>
+                <input type="text" id="tgToken" placeholder="123456:ABC-DEF..." value="${safeVal(tgToken)}">
+                ${getStatusLabel(tgToken, sysParams.tgToken)}
+            </div>
+            <div class="input-block">
+                <label>Chat ID</label>
+                <input type="text" id="tgId" placeholder="123456789" value="${safeVal(tgId)}">
+                ${getStatusLabel(tgId, sysParams.tgId)}
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="validateApi('tg')">验证</button>
+                <button class="btn btn-success" onclick="saveConfig({TG_BOT_TOKEN: val('tgToken'), TG_CHAT_ID: val('tgId')}, 'tgModal')">保存</button>
+                <button class="btn btn-danger" onclick="clearConfig('tg')">清除</button>
+            </div>
         </div>
-   </div>
+    </div>
+
+    <!-- CF配置模态框 -->
     <div id="cfModal" class="modal">
         <div class="modal-content">
             <div class="modal-head"><span>☁️ Cloudflare 统计配置</span><span class="close-btn" onclick="closeModal('cfModal')">×</span></div>
-            <div style="margin-bottom:15px;border-bottom:1px solid var(--border);padding-bottom:10px">
-                <label>方案1: Account ID + API Token</label><input type="text" id="cfAcc" placeholder="Account ID" style="margin-bottom:10px" value="${safeVal(cfId)}">${getStatusLabel(cfId, sysParams.cfId)}<input type="text" id="cfTok" placeholder="API Token (Read permission)" value="${safeVal(cfToken)}">${getStatusLabel(cfToken, sysParams.cfToken)}
+            <div style="margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border)">
+                <label>方案1: Account ID + API Token</label>
+                <input type="text" id="cfAcc" placeholder="Account ID" style="margin-bottom:10px" value="${safeVal(cfId)}">
+                ${getStatusLabel(cfId, sysParams.cfId)}
+                <input type="text" id="cfTok" placeholder="API Token" value="${safeVal(cfToken)}">
+                ${getStatusLabel(cfToken, sysParams.cfToken)}
             </div>
-            <label>方案2: Email + Global Key</label><input type="text" id="cfMail" placeholder="Email" style="margin-bottom:10px" value="${safeVal(cfMail)}">${getStatusLabel(cfMail, sysParams.cfMail)}<input type="text" id="cfKey" placeholder="Global API Key" value="${safeVal(cfKey)}">${getStatusLabel(cfKey, sysParams.cfKey)}
-            <div class="modal-btns"><button class="btn-valid" onclick="validateApi('cf')">可用性验证</button><button class="btn-save" onclick="saveConfig({CF_ID:val('cfAcc'), CF_TOKEN:val('cfTok'), CF_EMAIL:val('cfMail'), CF_KEY:val('cfKey')}, 'cfModal')">保存</button><button class="btn-clear" onclick="clearConfig('cf')">清除配置</button><button class="btn-cancel" onclick="closeModal('cfModal')">取消</button></div>
+            <div class="input-block">
+                <label>方案2: Email + Global Key</label>
+                <input type="text" id="cfMail" placeholder="Email" style="margin-bottom:10px" value="${safeVal(cfMail)}">
+                ${getStatusLabel(cfMail, sysParams.cfMail)}
+                <input type="text" id="cfKey" placeholder="Global API Key" value="${safeVal(cfKey)}">
+                ${getStatusLabel(cfKey, sysParams.cfKey)}
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="validateApi('cf')">验证</button>
+                <button class="btn btn-success" onclick="saveConfig({CF_ID:val('cfAcc'), CF_TOKEN:val('cfTok'), CF_EMAIL:val('cfMail'), CF_KEY:val('cfKey')}, 'cfModal')">保存</button>
+                <button class="btn btn-danger" onclick="clearConfig('cf')">清除</button>
+            </div>
         </div>
     </div>
+
     <div id="toast">已复制</div>
+
     <script>
         const UUID = "${uuid}"; const CONVERTER = "${converter}"; const CLIENT_IP = "${clientIP}"; const HAS_AUTH = ${hasAuth};
-        window.addEventListener('DOMContentLoaded', () => { if (HAS_AUTH && !sessionStorage.getItem("is_active")) { document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/"; window.location.reload(); } else { document.body.classList.add('loaded'); if(!document.getElementById('subDom').value) { updateLink(); } } });
-        function val(id) { return document.getElementById(id).value; } function showModal(id) { document.getElementById(id).classList.add('show'); } function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-        async function updateStats() { try { const start = Date.now(); await fetch('https://www.google.com/generate_204', {mode: 'no-cors'}); document.getElementById('googleStatus').innerText = (Date.now() - start) + 'ms'; } catch (e) { document.getElementById('googleStatus').innerText = 'Timeout'; } try { const res = await fetch('?flag=stats'); const data = await res.json(); document.getElementById('reqCount').innerText = data.req; document.getElementById('apiStatus').innerText = data.cfConfigured ? 'Connected' : 'Internal'; document.getElementById('currentIp').innerText = data.ip; document.getElementById('kvStatus').innerText = data.hasKV ? 'D1/KV OK' : 'Missing'; } catch (e) { document.getElementById('reqCount').innerText = 'N/A'; } }
-        async function loadLogs() { try { const res = await fetch('?flag=get_logs'); const data = await res.json(); let html = ''; if (data.type === 'd1' && Array.isArray(data.logs)) { html = data.logs.map(log => "<div class='log-entry'><span class='log-time'>" + log.time + "</span><span class='log-ip'>" + log.ip + "</span><span class='log-loc'>" + log.region + "</span><span class='log-tag " + (log.action.includes('订阅')||log.action.includes('检测')?'green':'') + "'>" + log.action + "</span></div>").join(''); } else if (data.logs && typeof data.logs === 'string') { html = data.logs.split('\\n').filter(x=>x).slice(0, 50).map(line => { const p = line.split('|'); return "<div class='log-entry'><span class='log-time'>" + p[0] + "</span><span class='log-ip'>" + p[1] + "</span><span class='log-loc'>" + p[2] + "</span><span class='log-tag " + (p[3].includes('订阅')||p[3].includes('检测')?'green':'') + "'>" + p[3] + "</span></div>"; }).join(''); } document.getElementById('logBox').innerHTML = html || '暂无日志'; } catch(e) { document.getElementById('logBox').innerText = '加载失败或未绑定 DB/KV'; } }
-        async function loadWhitelist() { try { const res = await fetch('?flag=get_whitelist'); const data = await res.json(); const list = data.list || []; const html = list.length ? list.map(item => { const actionHtml = item.type === 'system' ? '<span class="sys-tag">🔒 系统内置</span>' : "<button class='btn-del' onclick='delWhitelist(\\"" + item.ip + "\\")'>🗑️ 删除</button>"; return "<tr><td>" + item.ip + "</td><td>" + actionHtml + "</td></tr>"; }).join('') : '<tr><td colspan="2" style="text-align:center">暂无白名单 IP</td></tr>'; document.getElementById('whitelistBody').innerHTML = html; } catch(e) { document.getElementById('whitelistBody').innerHTML = '<tr><td colspan="2">加载失败</td></tr>'; } }
-        async function addWhitelist() { const ip = document.getElementById('newWhitelistIp').value.trim(); if(!ip) return; try { await fetch('?flag=add_whitelist', { method:'POST', body:JSON.stringify({ip}) }); document.getElementById('newWhitelistIp').value = ''; loadWhitelist(); } catch(e) { alert('添加失败'); } }
-        async function delWhitelist(ip) { if(!confirm('确定移除 '+ip+'?')) return; try { await fetch('?flag=del_whitelist', { method:'POST', body:JSON.stringify({ip}) }); loadWhitelist(); } catch(e) { alert('删除失败'); } }
-        async function checkProxy() { const val = document.getElementById('pIp').value; if(val) { try { await navigator.clipboard.writeText(val); alert("✅ ProxyIP 已复制成功\\n\\n点击确定跳转检测网站..."); } catch(e) { alert("跳转检测网站..."); } fetch('?flag=log_proxy_check'); window.open("${PROXY_CHECK_URL}", "_blank"); } }
-        function testSub() { const url = document.getElementById('finalLink').value; if(url) { fetch('?flag=log_sub_test'); window.open(url); } }
-        async function saveConfig(data, modalId) { try { await fetch('?flag=save_config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }); alert('保存成功'); if(modalId) closeModal(modalId); setTimeout(() => location.reload(), 500); } catch(e) { alert('保存失败: ' + e); } }
-        function saveNodeConfig() { const data = { ADD: val('inpAdd'), ADDAPI: val('inpAddApi'), ADDCSV: val('inpAddCsv') }; saveConfig(data, null); }
-        async function clearConfig(type) { if(!confirm('确定清除后台配置？\\n(若存在系统环境变量，清除后将自动恢复为系统值)')) return; let data = {}; if(type === 'tg') data = { TG_BOT_TOKEN: "", TG_CHAT_ID: "" }; if(type === 'cf') data = { CF_ID: "", CF_TOKEN: "", CF_EMAIL: "", CF_KEY: "" }; saveConfig(data, type + 'Modal'); }
-        async function validateApi(type) { const endpoint = type === 'tg' ? 'validate_tg' : 'validate_cf'; let payload = {}; if(type === 'tg') payload = { TG_BOT_TOKEN: val('tgToken'), TG_CHAT_ID: val('tgId') }; else payload = { CF_ID:val('cfAcc'), CF_TOKEN:val('cfTok'), CF_EMAIL:val('cfMail'), CF_KEY:val('cfKey') }; try { const res = await fetch('?flag=' + endpoint, { method:'POST', body:JSON.stringify(payload) }); const d = await res.json(); alert(d.msg || (d.success ? '验证通过' : '验证失败')); } catch(e) { alert('请求错误'); } }
+
+        // 页面加载
+        window.addEventListener('DOMContentLoaded', () => {
+            if (HAS_AUTH && !sessionStorage.getItem("is_active")) {
+                document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+                window.location.reload();
+            } else {
+                document.body.classList.add('loaded');
+                if(!document.getElementById('subDom').value) updateLink();
+                generateStars();
+            }
+        });
+
+        // 生成星星背景
+        function generateStars() {
+            const starsContainer = document.getElementById('starsContainer');
+            const starCount = 300; // 增加到300颗星星，满屏效果
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                // 随机大小
+                const size = Math.random() * 2 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // 工具函数
+        function val(id) { return document.getElementById(id).value; }
+        function showModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        // 动态调整球体数字大小，防止溢出
+        function adjustSphereValue(element, text) {
+            element.innerText = text;
+            const len = text.length;
+            if (len <= 5) {
+                element.setAttribute('data-length', 'short');
+            } else if (len <= 10) {
+                element.setAttribute('data-length', 'medium');
+            } else if (len <= 20) {
+                element.setAttribute('data-length', 'long');
+            } else {
+                element.setAttribute('data-length', 'verylong');
+            }
+        }
+
+        // 切换面板 - 修复为网格布局
+        function showSection(section) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + section).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+        }
+
+        // 更新统计
+        async function updateStats() {
+            try {
+                const start = Date.now();
+                await fetch('https://www.google.com/generate_204', {mode: 'no-cors'});
+                document.getElementById('googleStatus').innerText = (Date.now() - start) + 'ms';
+            } catch (e) { document.getElementById('googleStatus').innerText = 'Timeout'; }
+            try {
+                const res = await fetch('?flag=stats');
+                const data = await res.json();
+                const reqCountEl = document.getElementById('reqCount');
+                adjustSphereValue(reqCountEl, data.req);
+                document.getElementById('currentIp').innerText = data.ip;
+                document.getElementById('kvStatus').innerText = data.hasKV ? 'D1/KV OK' : 'Missing';
+            } catch (e) {
+                const reqCountEl = document.getElementById('reqCount');
+                adjustSphereValue(reqCountEl, 'N/A');
+            }
+        }
+
+        // 加载日志
+        async function loadLogs() {
+            try {
+                const res = await fetch('?flag=get_logs');
+                const data = await res.json();
+                let html = '';
+                if (data.type === 'd1' && Array.isArray(data.logs)) {
+                    html = data.logs.map(log => "<div class='log-entry'><span class='log-time'>" + log.time + "</span><span class='log-ip'>" + log.ip + "</span><span class='log-loc'>" + log.region + "</span><span class='log-tag " + (log.action.includes('订阅')||log.action.includes('检测')?'green':'') + "'>" + log.action + "</span></div>").join('');
+                } else if (data.logs && typeof data.logs === 'string') {
+                    html = data.logs.split('\\n').filter(x=>x).slice(0, 50).map(line => {
+                        const p = line.split('|');
+                        return "<div class='log-entry'><span class='log-time'>" + p[0] + "</span><span class='log-ip'>" + p[1] + "</span><span class='log-loc'>" + p[2] + "</span><span class='log-tag " + (p[3].includes('订阅')||p[3].includes('检测')?'green':'') + "'>" + p[3] + "</span></div>";
+                    }).join('');
+                }
+                document.getElementById('logBox').innerHTML = html || '暂无日志';
+            } catch(e) { document.getElementById('logBox').innerText = '加载失败或未绑定 DB/KV'; }
+        }
+
+        // 加载白名单
+        async function loadWhitelist() {
+            try {
+                const res = await fetch('?flag=get_whitelist');
+                const data = await res.json();
+                const list = data.list || [];
+                const html = list.length ? list.map(item => {
+                    const actionHtml = item.type === 'system' ? '<span class="sys-tag">🔒 系统</span>' : "<button class='btn-del' onclick='delWhitelist(\\"" + item.ip + "\\")'>删除</button>";
+                    return "<tr><td>" + item.ip + "</td><td>" + actionHtml + "</td></tr>";
+                }).join('') : '<tr><td colspan="2" style="text-align:center">暂无白名单 IP</td></tr>';
+                document.getElementById('whitelistBody').innerHTML = html;
+            } catch(e) { document.getElementById('whitelistBody').innerHTML = '<tr><td colspan="2">加载失败</td></tr>'; }
+        }
+
+        async function addWhitelist() {
+            const ip = document.getElementById('newWhitelistIp').value.trim();
+            if(!ip) return;
+            try {
+                await fetch('?flag=add_whitelist', { method:'POST', body:JSON.stringify({ip}) });
+                document.getElementById('newWhitelistIp').value = '';
+                loadWhitelist();
+            } catch(e) { alert('添加失败'); }
+        }
+
+        async function delWhitelist(ip) {
+            if(!confirm('确定移除 '+ip+'?')) return;
+            try {
+                await fetch('?flag=del_whitelist', { method:'POST', body:JSON.stringify({ip}) });
+                loadWhitelist();
+            } catch(e) { alert('删除失败'); }
+        }
+
+        // ProxyIP检测
+        async function checkProxy() {
+            const val = document.getElementById('pIp').value;
+            if(val) {
+                try { await navigator.clipboard.writeText(val); alert("✅ ProxyIP 已复制\\n\\n点击确定跳转检测网站..."); }
+                catch(e) { alert("跳转检测网站..."); }
+                fetch('?flag=log_proxy_check');
+                window.open("${PROXY_CHECK_URL}", "_blank");
+            }
+        }
+
+        function testSub() {
+            const url = document.getElementById('finalLink').value;
+            if(url) { fetch('?flag=log_sub_test'); window.open(url); }
+        }
+
+        // 保存配置
+        async function saveConfig(data, modalId) {
+            try {
+                await fetch('?flag=save_config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+                alert('保存成功');
+                if(modalId) closeModal(modalId);
+                setTimeout(() => location.reload(), 500);
+            } catch(e) { alert('保存失败: ' + e); }
+        }
+
+        function saveNodeConfig() {
+            const data = { ADD: val('inpAdd'), ADDAPI: val('inpAddApi'), ADDCSV: val('inpAddCsv') };
+            saveConfig(data, null);
+        }
+
+        async function clearConfig(type) {
+            if(!confirm('确定清除后台配置？')) return;
+            let data = {};
+            if(type === 'tg') data = { TG_BOT_TOKEN: "", TG_CHAT_ID: "" };
+            if(type === 'cf') data = { CF_ID: "", CF_TOKEN: "", CF_EMAIL: "", CF_KEY: "" };
+            saveConfig(data, type + 'Modal');
+        }
+
+        async function validateApi(type) {
+            const endpoint = type === 'tg' ? 'validate_tg' : 'validate_cf';
+            let payload = {};
+            if(type === 'tg') payload = { TG_BOT_TOKEN: val('tgToken'), TG_CHAT_ID: val('tgId') };
+            else payload = { CF_ID:val('cfAcc'), CF_TOKEN:val('cfTok'), CF_EMAIL:val('cfMail'), CF_KEY:val('cfKey') };
+            try {
+                const res = await fetch('?flag=' + endpoint, { method:'POST', body:JSON.stringify(payload) });
+                const d = await res.json();
+                alert(d.msg || (d.success ? '验证通过' : '验证失败'));
+            } catch(e) { alert('请求错误'); }
+        }
+
         function toggleTheme() { document.body.classList.toggle('light'); }
-        function updateLink() { let base = document.getElementById('subDom').value.trim() || document.getElementById('hostDom').value.trim(); let host = document.getElementById('hostDom').value.trim(); let p = document.getElementById('pIp').value.trim(); let isClash = document.getElementById('clashMode').checked; let path = p ? "/proxyip=" + p : "/"; const search = new URLSearchParams(); search.set('uuid', UUID); search.set('encryption', 'none'); search.set('security', 'tls'); search.set('sni', host); search.set('alpn', 'h3'); search.set('fp', 'random'); search.set('allowInsecure', '1'); search.set('type', 'ws'); search.set('host', host); search.set('path', path); search.set('udp', 'false'); let finalUrl = \`https://\${base}/sub?\${search.toString()}\`; if (isClash) { let subUrl = CONVERTER + "/sub?target=clash&url=" + encodeURIComponent(finalUrl) + "&emoji=true&list=false&sort=false"; document.getElementById('finalLink').value = subUrl; } else { document.getElementById('finalLink').value = finalUrl; } }
+
+        // 更新订阅链接
+        function updateLink() {
+            let base = document.getElementById('subDom').value.trim() || document.getElementById('hostDom').value.trim();
+            let host = document.getElementById('hostDom').value.trim();
+            let p = document.getElementById('pIp').value.trim();
+            let isClash = document.getElementById('clashMode').checked;
+            let path = p ? "/proxyip=" + p : "/";
+            const search = new URLSearchParams();
+            search.set('uuid', UUID);
+            search.set('encryption', 'none');
+            search.set('security', 'tls');
+            search.set('sni', host);
+            search.set('alpn', 'h3');
+            search.set('fp', 'random');
+            search.set('allowInsecure', '1');
+            search.set('type', 'ws');
+            search.set('host', host);
+            search.set('path', path);
+            let finalUrl = \`https://\${base}/sub?\${search.toString()}\`;
+            if (isClash) {
+                let subUrl = CONVERTER + "/sub?target=clash&url=" + encodeURIComponent(finalUrl) + "&emoji=true&list=false&sort=false";
+                document.getElementById('finalLink').value = subUrl;
+            } else {
+                document.getElementById('finalLink').value = finalUrl;
+            }
+        }
+
         function toggleClash() { updateLink(); }
-        function copyId(id) { const el = document.getElementById(id); el.select(); navigator.clipboard.writeText(el.value).then(() => { const t = document.getElementById('toast'); t.classList.add('show'); t.style.opacity=1; setTimeout(() => t.style.opacity=0, 2000); }); }
-        function logout() { document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/"; sessionStorage.removeItem("is_active"); location.reload(); }
-        updateStats(); loadLogs(); loadWhitelist(); updateLink(); setInterval(loadLogs, 3000);
+
+        function copyId(id) {
+            const el = document.getElementById(id);
+            el.select();
+            navigator.clipboard.writeText(el.value).then(() => {
+                const t = document.getElementById('toast');
+                t.style.opacity=1;
+                setTimeout(() => t.style.opacity=0, 2000);
+            });
+        }
+
+        function logout() {
+            document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+            sessionStorage.removeItem("is_active");
+            location.reload();
+        }
+
+        // 初始化
+        updateStats();
+        loadLogs();
+        loadWhitelist();
+        updateLink();
+        setInterval(loadLogs, 5000);
     </script>
 </body>
 </html>`;
