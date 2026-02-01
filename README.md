@@ -6,6 +6,11 @@
 
 - [项目介绍](#-项目介绍)
   - [配置加载优先级详解](#️-配置加载优先级详解)
+- [🔑 默认值配置格式说明（重要）](#-默认值配置格式说明重要)
+  - [支持的两种写法](#支持的两种写法)
+  - [Worker 版配置变量](#worker-版配置变量)
+  - [Snippets 版配置变量](#snippets-版配置变量)
+  - [如何修改 Base64 为明文](#如何修改-base64-为明文)
 - [代码版本说明](#-代码版本说明)
 - [界面预览](#️-界面预览)
 - [懒人使用指南](#-懒人使用指南)
@@ -107,6 +112,131 @@
 - 如果删除环境变量，系统会自动降级使用 D1 数据库中的配置
 - 如果 D1 和 KV 都未配置，使用代码中的默认值
 - 环境变量适合存储密钥等敏感信息，后台配置适合频繁修改的参数
+
+---
+
+## 🔑 默认值配置格式说明（重要）
+
+> **⚠️ 重要提示：代码中使用 Base64 编码的默认值变量，同时支持 Base64 和明文两种写法！**
+>
+> 用户可以根据自己的需求，选择使用 Base64 编码或直接使用明文。两种方式功能完全相同，不影响任何功能。
+
+### 支持的两种写法
+
+| 写法 | 示例 | 说明 |
+|------|------|------|
+| **Base64 编码** | `atob("UHJveHlJUC5VUy5DTUxpdXNzc3MubmV0")` | 防止 GitHub 搜索和爬虫直接匹配敏感域名 |
+| **明文** | `"ProxyIP.US.CMLiussss.net"` | 直观易读，方便修改 |
+
+**两种写法在运行时效果完全相同**，JavaScript 会在代码执行时自动解码 Base64，最终得到相同的字符串值。
+
+---
+
+### Worker 版配置变量
+
+**文件：`_worker.js` / `worker测试.txt`**
+
+以下变量支持 Base64 或明文两种格式：
+
+| 变量名 | 用途 | 当前默认值（Base64 解码后） |
+|--------|------|---------------------------|
+| `DEFAULT_PROXY_IP` | 默认 ProxyIP 地址 | `ProxyIP.US.CMLiussss.net` |
+| `DEFAULT_SUB_DOMAIN` | 默认订阅器域名 | `sub.cmliussss.net` |
+| `DEFAULT_CONVERTER` | 默认订阅转换后端 | `https://subapi.cmliussss.net` |
+| `CLASH_CONFIG` | Clash 配置模板 URL | ACL4SSR 配置链接 |
+| `SINGBOX_CONFIG_V12` | Sing-box v1.12 配置 | sinspired 模板链接 |
+| `SINGBOX_CONFIG_V11` | Sing-box v1.11 配置 | sinspired 模板链接 |
+
+**代码示例（Worker 版）：**
+
+```javascript
+// 方式一：Base64 编码（当前默认）
+const DEFAULT_PROXY_IP = atob("UHJveHlJUC5VUy5DTUxpdXNzc3MubmV0"); // 支持多ProxyIP，使用逗号分隔
+const DEFAULT_SUB_DOMAIN = atob("c3ViLmNtbGl1c3Nzcy5uZXQ=");      // 支持多订阅域名，使用逗号分隔
+const DEFAULT_CONVERTER = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA=="); // 支持多转换器，使用逗号分隔
+
+// 方式二：明文（用户可改成这样）
+const DEFAULT_PROXY_IP = "你的proxyip地址";     // 支持多ProxyIP，使用逗号分隔
+const DEFAULT_SUB_DOMAIN = "你的sub订阅器域名";  // 支持多订阅域名，使用逗号分隔
+const DEFAULT_CONVERTER = "https://你的转换后端"; // 支持多转换器，使用逗号分隔
+```
+
+---
+
+### Snippets 版配置变量
+
+**文件：`snippets.js` / `snippets测试.txt`**
+
+以下变量支持 Base64 或明文两种格式：
+
+| 变量名 | 用途 | 当前默认值（Base64 解码后） |
+|--------|------|---------------------------|
+| `DEFAULT_PROXY_IP` | 默认 ProxyIP 地址 | `ProxyIP.US.CMLiussss.net` |
+| `DEFAULT_SUB_DOMAIN` | 默认订阅器域名 | `sub.cmliussss.net` |
+| `DEFAULT_CONVERTER` | 默认订阅转换后端 | `https://subapi.cmliussss.net` |
+| `CLASH_CONFIG` | Clash 配置模板 URL | ACL4SSR 配置链接 |
+| `SINGBOX_CONFIG_V12` | Sing-box v1.12 配置 | sinspired 模板链接 |
+| `SINGBOX_CONFIG_V11` | Sing-box v1.11 配置 | sinspired 模板链接 |
+
+**代码示例（Snippets 版）：**
+
+```javascript
+// 方式一：Base64 编码（当前默认）
+const DEFAULT_PROXY_IP = atob("UHJveHlJUC5VUy5DTUxpdXNzc3MubmV0");  //可修改自定义的proxyip
+const DEFAULT_SUB_DOMAIN = atob("c3ViLmNtbGl1c3Nzcy5uZXQ=");  //可修改自定义的sub订阅器
+const DEFAULT_CONVERTER = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA==");  //可修改自定义后端api
+const CLASH_CONFIG = atob("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p"); //可修改自定义订阅配置转换ini
+const SINGBOX_CONFIG_V12 = atob("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NpbnNwaXJlZC9zdWItc3RvcmUtdGVtcGxhdGUvbWFpbi8xLjEyLngvc2luZy1ib3guanNvbg=="); //禁止修改 优先使用1.12 后用1.11
+const SINGBOX_CONFIG_V11 = atob("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NpbnNwaXJlZC9zdWItc3RvcmUtdGVtcGxhdGUvbWFpbi8xLjExLngvc2luZy1ib3guanNvbg=="); //禁止修改
+
+// 方式二：明文（用户可改成这样）
+const DEFAULT_PROXY_IP = "你的proxyip地址";  //可修改自定义的proxyip
+const DEFAULT_SUB_DOMAIN = "你的sub订阅器域名";  //可修改自定义的sub订阅器
+const DEFAULT_CONVERTER = "https://你的转换后端";  //可修改自定义后端api
+const CLASH_CONFIG = "https://你的clash配置链接"; //可修改自定义订阅配置转换ini
+const SINGBOX_CONFIG_V12 = "https://你的singbox配置链接"; //可修改singbox的json配置
+const SINGBOX_CONFIG_V11 = "https://你的singbox配置链接"; //可修改singbox的json配置
+```
+
+---
+
+### 如何修改 Base64 为明文
+
+**步骤 1：找到要修改的变量**
+
+在代码顶部的「用户配置区域」找到使用 `atob()` 的变量。
+
+**步骤 2：解码 Base64 查看原始值（可选）**
+
+如果想知道当前 Base64 编码的内容，可以在浏览器控制台执行：
+
+```javascript
+// 示例：解码 DEFAULT_PROXY_IP
+atob("UHJveHlJUC5VUy5DTUxpdXNzc3MubmV0")
+// 输出: "ProxyIP.US.CMLiussss.net"
+```
+
+**步骤 3：直接替换为明文**
+
+```javascript
+// 修改前（Base64）
+const DEFAULT_PROXY_IP = atob("UHJveHlJUC5VUy5DTUxpdXNzc3MubmV0");
+
+// 修改后（明文）
+const DEFAULT_PROXY_IP = "你想要的proxyip地址";
+```
+
+**步骤 4：保存并部署**
+
+修改完成后保存代码，重新部署即可生效。
+
+---
+
+**💡 小贴士：**
+
+- 如果你想保持隐私（防止 GitHub 搜索到你的域名），建议继续使用 Base64 编码
+- 如果你只是自用且不公开代码，使用明文更方便修改和维护
+- 两种方式可以混用，比如敏感域名用 Base64，普通配置用明文
 
 ---
 
